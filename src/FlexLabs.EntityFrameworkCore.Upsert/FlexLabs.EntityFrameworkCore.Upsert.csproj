@@ -40,7 +40,7 @@ v2.1.0:
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="3.0.0-preview6.19304.10" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Release'">

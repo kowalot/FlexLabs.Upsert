@@ -49,6 +49,8 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Runners
         /// <param name="name">The name of the variable</param>
         /// <returns>The reference to the variable</returns>
         protected virtual string Variable(string name) => "@x" + name;
+
+
         /// <summary>
         /// Get the escaped database table schema
         /// </summary>
@@ -56,7 +58,7 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Runners
         /// <returns>The escaped schema name of the table, followed by a '.'. If the table has no schema - returns null</returns>
         protected virtual string GetSchema(IEntityType entityType)
         {
-            var schema = entityType.Relational().Schema;
+            var schema = entityType.GetSchemaName();
             return schema != null
                 ? EscapeName(schema) + "."
                 : null;
@@ -66,7 +68,7 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Runners
         /// </summary>
         /// <param name="entityType">The entity type of the table</param>
         /// <returns>The fully qualified and escaped table reference</returns>
-        protected virtual string GetTableName(IEntityType entityType) => GetSchema(entityType) + EscapeName(entityType.Relational().TableName);
+        protected virtual string GetTableName(IEntityType entityType) => GetSchema(entityType) + EscapeName(entityType.GetTableName());
         /// <summary>
         /// Prefix used to reference source dataset columns
         /// </summary>
@@ -89,10 +91,10 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Runners
             bool noUpdate, bool useExpressionCompiler)
         {
             var joinColumns = ProcessMatchExpression(entityType, match);
-            var joinColumnNames = joinColumns.Select(c => (c.Relational().ColumnName, c.IsColumnNullable())).ToArray();
+            var joinColumnNames = joinColumns.Select(c => (c.GetColumnName() , c.IsColumnNullable())).ToArray();
 
             var properties = entityType.GetProperties()
-                .Where(p => p.ValueGenerated == ValueGenerated.Never || p.AfterSaveBehavior == PropertySaveBehavior.Save)
+                .Where(p => p.ValueGenerated == ValueGenerated.Never )
                 .Where(p => p.PropertyInfo != null)
                 .ToArray();
 
@@ -124,7 +126,7 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Runners
                 updateExpressions = new List<(IProperty Property, IKnownValue Value)>();
                 foreach (var property in properties)
                 {
-                    if (joinColumnNames.Any(c => c.ColumnName == property.Relational().ColumnName))
+                    if (joinColumnNames.Any(c => c.Item1 == property.GetColumnName()))
                         continue;
 
                     var propertyAccess = new PropertyValue(property.Name, false) { Property = property };
@@ -148,10 +150,9 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Runners
                 .Select(e => properties
                     .Select(p =>
                     {
-                        var relational = p.Relational();
-                        var columnName = relational.ColumnName;
+                        var columnName = p.GetColumnName();
                         var rawValue = p.PropertyInfo.GetValue(e);
-                        if (rawValue == null && (relational.DefaultValue ?? relational.DefaultValueSql) != null)
+                        if (rawValue == null && (p.GetDefaultValue()  ?? p.GetDefaultValueSql()) != null)
                             return (null, null);
                         var value = new ConstantValue(rawValue, p);
                         return (columnName, value);
@@ -168,7 +169,7 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Runners
                 arg.ArgumentIndex = i++;
 
             var columnUpdateExpressions = updateExpressions?.Count > 0
-                ? updateExpressions.Select(x => (x.Property.Relational().ColumnName, x.Value)).ToArray()
+                ? updateExpressions.Select(x => (x.Property.GetColumnName(), x.Value)).ToArray()
                 : null;
             var sqlCommand = GenerateCommand(GetTableName(entityType), newEntities, joinColumnNames, columnUpdateExpressions, updateConditionExpression);
             return (sqlCommand, arguments);
@@ -185,7 +186,7 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Runners
             switch (value)
             {
                 case PropertyValue prop:
-                    var columnName = prop.Property.Relational().ColumnName;
+                    var columnName = prop.Property.GetColumnName();
                     if (expandLeftColumn != null && prop.IsLeftParameter)
                         return expandLeftColumn(columnName);
 
