@@ -94,7 +94,7 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Runners
             var joinColumnNames = joinColumns.Select(c => (c.GetColumnName() , c.IsColumnNullable())).ToArray();
 
             var properties = entityType.GetProperties()
-                .Where(p => p.ValueGenerated == ValueGenerated.Never )
+                .Where(p => p.ValueGenerated == ValueGenerated.Never || p.GetAfterSaveBehavior() == PropertySaveBehavior.Save)
                 .Where(p => p.PropertyInfo != null)
                 .ToArray();
 
@@ -126,7 +126,7 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Runners
                 updateExpressions = new List<(IProperty Property, IKnownValue Value)>();
                 foreach (var property in properties)
                 {
-                    if (joinColumnNames.Any(c => c.Item1 == property.GetColumnName()))
+                    if (joinColumnNames.Any(c => c.Item1 == property.GetColumnName()) )
                         continue;
 
                     var propertyAccess = new PropertyValue(property.Name, false) { Property = property };
@@ -152,7 +152,9 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Runners
                     {
                         var columnName = p.GetColumnName();
                         var rawValue = p.PropertyInfo.GetValue(e);
-                        if (rawValue == null && (p.GetDefaultValue()  ?? p.GetDefaultValueSql()) != null)
+                        if (rawValue == null && p.GetDefaultValue() != null)
+                            return (columnName, new ConstantValue(p.GetDefaultValue(), p));
+                        if (rawValue == null && p.GetDefaultValueSql() != null)
                             return (null, null);
                         var value = new ConstantValue(rawValue, p);
                         return (columnName, value);

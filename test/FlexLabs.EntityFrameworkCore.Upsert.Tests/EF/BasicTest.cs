@@ -20,14 +20,14 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Tests.EF
         {
             DatabaseEngines = new List<TestDbContext.DbDriver>
             {
-                TestDbContext.DbDriver.InMemory,
-                TestDbContext.DbDriver.Sqlite,
+                TestDbContext.DbDriver.Sqlite
             };
             if (IsAppVeyor || RunLocalDockerTests)
                 DatabaseEngines.AddRange(new[]
                 {
+                TestDbContext.DbDriver.InMemory,
+                TestDbContext.DbDriver.MSSQL,
                     TestDbContext.DbDriver.Postgres,
-                    TestDbContext.DbDriver.MSSQL,
                     TestDbContext.DbDriver.MySQL,
                 });
         }
@@ -42,7 +42,7 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Tests.EF
             private static readonly string Postgres_Connection = $"Server=localhost;Port={Postgres_Port};Database={Username};Username={Username};Password={Password}";
             private const string SqlServer_ImageName = "flexlabs_upsert_test_sqlserver";
             private const string SqlServer_Port = "21433";
-            private static readonly string SqlServer_Connection = $"Server=localhost,{SqlServer_Port};Database={Username};User Id=sa;Password={Password}";
+            private static readonly string SqlServer_Connection = $"Data Source=.\\SQLEXPRESS;Initial Catalog=FlexLabs;Integrated Security=True";
             private const string MySql_ImageName = "flexlabs_upsert_test_mysql";
             private const string MySql_Port = "23306";
             private static readonly string MySql_Connection = $"Server=localhost;Port={MySql_Port};Database={Username};Uid=root;Pwd={Password}";
@@ -54,7 +54,7 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Tests.EF
             private const string Password = "Password12!";
 
             private static readonly string AppVeyor_Postgres_Connection = $"Server=localhost;Port=5432;Database={Username};Username=postgres;Password={Password}";
-            private static readonly string AppVeyor_SqlServer_Connection = $"Server=(local)\\SQL2017;Database={Username};User Id=sa;Password={Password}";
+            private static readonly string AppVeyor_SqlServer_Connection = $"Data Source=.\\SQLEXPRESS;Initial Catalog=FlexLabs;Integrated Security=True";
             private static readonly string AppVeyor_MySql_Connection = $"Server=localhost;Port=3306;Database={Username};Uid=root;Pwd={Password}";
 
             private IDictionary<TestDbContext.DbDriver, Process> _processes;
@@ -75,6 +75,7 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Tests.EF
                 }
                 else
                 {
+                    
                     var lcow = DockerLCOW ? "--platform linux" : null;
                     if (DatabaseEngines.Contains(TestDbContext.DbDriver.Postgres))
                         _processes[TestDbContext.DbDriver.Postgres] = Process.Start("docker",
@@ -85,7 +86,7 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Tests.EF
                     if (DatabaseEngines.Contains(TestDbContext.DbDriver.MySQL))
                         _processes[TestDbContext.DbDriver.MySQL] = Process.Start("docker",
                             $"run --name {MySql_ImageName} {lcow} -e MYSQL_ROOT_PASSWORD={Password} -e MYSQL_USER={Username} -e MYSQL_PASSWORD={Password} -e MYSQL_DATABASE={Username} -p {MySql_Port}:3306 mysql");
-
+                           
                     WaitForConnection(TestDbContext.DbDriver.Postgres, Postgres_Connection);
                     WaitForConnection(TestDbContext.DbDriver.MSSQL, SqlServer_Connection);
                     WaitForConnection(TestDbContext.DbDriver.MySQL, MySql_Connection);
