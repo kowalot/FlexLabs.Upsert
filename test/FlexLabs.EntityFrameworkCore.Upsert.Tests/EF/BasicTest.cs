@@ -20,14 +20,15 @@ namespace FlexLabs.EntityFrameworkCore.Upsert.Tests.EF
         {
             DatabaseEngines = new List<TestDbContext.DbDriver>
             {
-                TestDbContext.DbDriver.Sqlite
+                 TestDbContext.DbDriver.MSSQL
             };
             if (IsAppVeyor || RunLocalDockerTests)
                 DatabaseEngines.AddRange(new[]
                 {
+                TestDbContext.DbDriver.Sqlite,
                 TestDbContext.DbDriver.InMemory,
-                TestDbContext.DbDriver.MSSQL,
-                    TestDbContext.DbDriver.Postgres,
+                TestDbContext.DbDriver.Sqlite,
+                   TestDbContext.DbDriver.Postgres,
                     TestDbContext.DbDriver.MySQL,
                 });
         }

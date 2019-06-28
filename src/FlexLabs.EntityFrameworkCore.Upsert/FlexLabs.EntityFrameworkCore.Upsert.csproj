@@ -29,7 +29,7 @@ v2.1.0:
 + Support for conditional expressions
 + Support for comparison expressions
 </PackageReleaseNotes>
-    <Version>3.0.0</Version>
+    <Version>3.0.1-prev1</Version>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release with Signing'">
@@ -39,6 +39,10 @@ v2.1.0:
     <AssemblyOriginatorKeyFile>..\..\certs\FlexLabsStrongKey.snk</AssemblyOriginatorKeyFile>
     <SignCertificateName>Artiom Chilaru</SignCertificateName>
     <PostBuildEvent>signtool.exe sign /n "$(SignCertificateName)" /fd sha256 /tr "http://timestamp.digicert.com" /td sha256 FlexLabs.EntityFrameworkCore.Upsert.dll</PostBuildEvent>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
